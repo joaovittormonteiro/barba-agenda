@@ -1,0 +1,12 @@
+'use client'
+
+import { FormEvent, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { MailIcon, ScissorsIcon } from '@/components/icons'
+
+export function AuthForm({ mode }: { mode: 'login' | 'signup' }) {
+  const router = useRouter(); const [message, setMessage] = useState(''); const [loading, setLoading] = useState(false)
+  async function submit(e: FormEvent<HTMLFormElement>) { e.preventDefault(); setMessage(''); setLoading(true); const data = new FormData(e.currentTarget); const email = String(data.get('email')); const password = String(data.get('password')); const result = mode === 'login' ? await supabase.auth.signInWithPassword({ email, password }) : await supabase.auth.signUp({ email, password, options: { data: { full_name: data.get('name'), role: data.get('role') } } }); setLoading(false); if (result.error) return setMessage(result.error.message); if (mode === 'signup') return setMessage('Conta criada. Confirme seu e-mail, se solicitado.'); router.push('/barbearias'); router.refresh() }
+  return <form onSubmit={submit} className="card mx-auto mt-6 max-w-md p-6 sm:p-8"><div className="mb-7 text-center"><ScissorsIcon className="mx-auto h-10 w-10 text-[#D4A574]"/><p className="eyebrow mt-4">BarbaAgenda</p><h1 className="mt-2 text-3xl font-bold">{mode === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}</h1></div><div className="space-y-4">{mode === 'signup' && <><label><span className="field-label">Nome completo</span><input className="field" required name="name" placeholder="Como podemos chamar você?"/></label><label><span className="field-label">Tipo de conta</span><select className="field" name="role"><option value="customer">Cliente</option><option value="owner">Dono de barbearia</option></select></label></>}<label><span className="field-label">E-mail</span><div className="relative"><MailIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D4A574]"/><input className="field-with-icon" required name="email" type="email" placeholder="voce@email.com"/></div></label><label><span className="field-label">Senha</span><input className="field" required name="password" type="password" minLength={6} placeholder="Mínimo de 6 caracteres"/></label>{message && <p className="rounded-xl bg-white/5 p-3 text-sm text-[#D4A574]">{message}</p>}<button disabled={loading} className="btn-primary w-full">{loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Cadastrar'}</button></div></form>
+}
